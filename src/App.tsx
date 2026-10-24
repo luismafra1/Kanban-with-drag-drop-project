@@ -1,5 +1,11 @@
+import { Board } from "./components/Board";
+
 function App() {
-  return <h1 className="p-8 text-3xl font-bold text-teal-700">Kanban</h1>;
+  return (
+    <main className="background bg-blue-400 h-screen content-center">
+      <Board />
+    </main>
+  );
 }
 
 export default App;
