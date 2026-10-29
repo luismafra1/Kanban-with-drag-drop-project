@@ -7,7 +7,7 @@ type BoardProps = {
 
 export function Board({ board }: BoardProps) {
   return (
-    <div className="size-9/10 mx-auto bg-red-200 flex flex-col sm:flex-row justify-evenly items-center outline-2 outline-green-400 rounded-sm">
+    <div className="size-9/10 mx-auto bg-surface flex flex-col sm:flex-row justify-evenly items-center outline-2 outline-green-400 rounded-sm">
       {board.columnOrder.map((columnId) => {
         const column = board.columns[columnId];
         const cards = column.cardIds.map((cardId) => board.cards[cardId]);
