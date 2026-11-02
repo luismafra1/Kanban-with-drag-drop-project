@@ -10,7 +10,7 @@ export function Column({ column, cards }: ColumnProps) {
   return (
     <section
       aria-labelledby={`column-${column.id}`}
-      className="bg-border flex flex-col p-2 h-3/10 sm:h-9/10 w-9/10 sm:w-3/10 outline-1 outline-purple-300 rounded-sm gap-2"
+      className="bg-border flex flex-col p-2 h-3/10 sm:h-9/10 w-9/10 sm:w-3/10 border border-border rounded-sm gap-2"
     >
       <h2
         id={`column-${column.id}`}
