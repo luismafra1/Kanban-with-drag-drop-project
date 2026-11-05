@@ -1,12 +1,21 @@
-import type { Card as CardData, Column as ColumnData } from "../types";
+import { useState } from "react";
+import type {
+  AddCardHandler,
+  Card as CardData,
+  Column as ColumnData,
+} from "../types";
 import { Card } from "./Card";
+import { CardFormDialog } from "./CardFormDialog";
 
 type ColumnProps = {
   column: ColumnData;
   cards: CardData[];
+  onAddCard: AddCardHandler;
 };
 
-export function Column({ column, cards }: ColumnProps) {
+export function Column({ column, cards, onAddCard }: ColumnProps) {
+  const [isAddingCard, setIsAddingCard] = useState(false);
+
   return (
     <section
       aria-labelledby={`column-${column.id}`}
@@ -26,6 +35,23 @@ export function Column({ column, cards }: ColumnProps) {
           <Card key={card.id} card={card} />
         ))}
       </ul>
+      <button
+        type="button"
+        onClick={() => setIsAddingCard(true)}
+        className="bg-accent-dark text-navy rounded-sm p-1 hover:cursor-pointer font-semibold"
+        aria-label={`Add card to ${column.title}`}
+      >
+        Add Card
+      </button>
+      {isAddingCard && (
+        <CardFormDialog
+          columnTitle={column.title}
+          onSubmit={(title, description) =>
+            onAddCard(column.id, title, description)
+          }
+          onClose={() => setIsAddingCard(false)}
+        />
+      )}
     </section>
   );
 }

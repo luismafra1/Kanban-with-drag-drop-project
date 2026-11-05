@@ -33,3 +33,9 @@ export type BoardAction =
         destinationIndex: number;
       };
     };
+
+export type AddCardHandler = (
+  columnId: string,
+  title: string,
+  description?: string,
+) => void;
