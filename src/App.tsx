@@ -1,11 +1,23 @@
-import { useReducer } from "react";
+import { useEffect, useReducer } from "react";
 import { Board } from "./components/Board";
 import { initialBoard } from "./lib/initialBoard";
+import { loadBoard, saveBoard } from "./lib/storage";
 import { boardReducer } from "./state/boardReducer";
 import type { AddCardHandler, Card } from "./types";
 
 function App() {
-  const [board, dispatch] = useReducer(boardReducer, initialBoard);
+  const [board, dispatch] = useReducer(
+    boardReducer,
+    initialBoard,
+    (initial) => {
+      const loadedBoard = loadBoard();
+      return loadedBoard ?? initial;
+    },
+  );
+
+  useEffect(() => {
+    saveBoard(board);
+  }, [board]);
 
   const handleAddCard: AddCardHandler = (columnId, title, description) => {
     const card: Card = { id: crypto.randomUUID(), title: title.trim() };
