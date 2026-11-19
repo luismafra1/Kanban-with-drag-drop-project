@@ -1,21 +1,19 @@
-import { useState } from "react";
-import type {
-  AddCardHandler,
-  Card as CardData,
-  Column as ColumnData,
-} from "../types";
+import type { Card as CardData, Column as ColumnData } from "../types";
 import { Card } from "./Card";
-import { CardFormDialog } from "./CardFormDialog";
 
 type ColumnProps = {
   column: ColumnData;
   cards: CardData[];
-  onAddCard: AddCardHandler;
+  onOpenCard: (cardId: string) => void;
+  onOpenCreate?: () => void;
 };
 
-export function Column({ column, cards, onAddCard }: ColumnProps) {
-  const [isAddingCard, setIsAddingCard] = useState(false);
-
+export function Column({
+  column,
+  cards,
+  onOpenCard,
+  onOpenCreate,
+}: ColumnProps) {
   return (
     <section
       aria-labelledby={`column-${column.id}`}
@@ -32,25 +30,18 @@ export function Column({ column, cards, onAddCard }: ColumnProps) {
         className="flex-auto flex sm:flex-col justify-start items-stretch sm:items-start rounded-sm gap-2 p-2 overflow-x-auto sm:overflow-y-auto"
       >
         {cards.map((card) => (
-          <Card key={card.id} card={card} />
+          <Card key={card.id} card={card} onOpen={onOpenCard} />
         ))}
       </ul>
-      <button
-        type="button"
-        onClick={() => setIsAddingCard(true)}
-        className="bg-accent-dark text-navy rounded-sm p-1 hover:cursor-pointer font-semibold"
-        aria-label={`Add card to ${column.title}`}
-      >
-        Add Card
-      </button>
-      {isAddingCard && (
-        <CardFormDialog
-          columnTitle={column.title}
-          onSubmit={(title, description) =>
-            onAddCard(column.id, title, description)
-          }
-          onClose={() => setIsAddingCard(false)}
-        />
+      {onOpenCreate && (
+        <button
+          type="button"
+          onClick={onOpenCreate}
+          className="bg-accent-dark text-navy rounded-sm p-1 hover:cursor-pointer font-semibold"
+          aria-label={`Add card to ${column.title}`}
+        >
+          Add Card
+        </button>
       )}
     </section>
   );

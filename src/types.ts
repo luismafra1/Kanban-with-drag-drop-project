@@ -25,17 +25,39 @@ export type BoardAction =
     }
   | {
       type: "MOVE_CARD";
-      payload: {
-        sourceColumnId: string;
-        destinationColumnId: string;
-        cardId: string;
-        // Posicao final do card em 'cardIds' da coluna de destino, depois da movimentacao
-        destinationIndex: number;
-      };
+      payload: MoveCardInput;
     };
+
+export type DialogState =
+  | { mode: "create"; columnId: string }
+  | { mode: "edit"; cardId: string }
+  | null;
 
 export type AddCardHandler = (
   columnId: string,
   title: string,
   description?: string,
 ) => void;
+
+export type DeleteCardHandler = (cardId: string) => void;
+
+export type UpdateCardHandler = (
+  cardId: string,
+  title: string,
+  description?: string,
+) => void;
+
+export type MoveCardInput = {
+  sourceColumnId: string;
+  destinationColumnId: string;
+  cardId: string;
+  destinationIndex: number;
+};
+
+export type MoveCardHandler = (input: MoveCardInput) => void;
+
+export type MoveColumnOption = {
+  id: string;
+  title: string;
+  cardCount: number;
+};

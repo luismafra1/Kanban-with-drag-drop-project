@@ -3,7 +3,13 @@ import { Board } from "./components/Board";
 import { initialBoard } from "./lib/initialBoard";
 import { loadBoard, saveBoard } from "./lib/storage";
 import { boardReducer } from "./state/boardReducer";
-import type { AddCardHandler, Card } from "./types";
+import type {
+  AddCardHandler,
+  Card,
+  DeleteCardHandler,
+  MoveCardHandler,
+  UpdateCardHandler,
+} from "./types";
 
 function App() {
   const [board, dispatch] = useReducer(
@@ -32,10 +38,41 @@ function App() {
     });
   };
 
+  const handleDeleteCard: DeleteCardHandler = (cardId) => {
+    dispatch({
+      type: "DELETE_CARD",
+      payload: { cardId },
+    });
+  };
+
+  const handleUpdateCard: UpdateCardHandler = (cardId, title, description) => {
+    dispatch({
+      type: "UPDATE_CARD",
+      payload: {
+        cardId,
+        title: title.trim(),
+        description: (description ?? "").trim(),
+      },
+    });
+  };
+
+  const handleMoveCard: MoveCardHandler = (move) => {
+    dispatch({
+      type: "MOVE_CARD",
+      payload: move,
+    });
+  };
+
   return (
     <main className="bg-navy h-dvh content-center">
       <h1 className="sr-only">Kanban Board</h1>
-      <Board board={board} onAddCard={handleAddCard} />
+      <Board
+        board={board}
+        onAddCard={handleAddCard}
+        onDeleteCard={handleDeleteCard}
+        onUpdateCard={handleUpdateCard}
+        onMoveCard={handleMoveCard}
+      />
     </main>
   );
 }
