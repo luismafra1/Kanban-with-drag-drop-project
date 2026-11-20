@@ -1,3 +1,5 @@
+import { useDroppable } from "@dnd-kit/core";
+import { SortableContext } from "@dnd-kit/sortable";
 import type { Card as CardData, Column as ColumnData } from "../types";
 import { Card } from "./Card";
 
@@ -14,8 +16,10 @@ export function Column({
   onOpenCard,
   onOpenCreate,
 }: ColumnProps) {
+  const { setNodeRef } = useDroppable({ id: column.id });
   return (
     <section
+      ref={setNodeRef}
       aria-labelledby={`column-${column.id}`}
       className="bg-border flex flex-col p-2 h-3/10 sm:h-9/10 w-9/10 sm:w-3/10 border border-border rounded-sm gap-2"
     >
@@ -25,14 +29,17 @@ export function Column({
       >
         {column.title}
       </h2>
-      <ul
-        role="list"
-        className="flex-auto flex sm:flex-col justify-start items-stretch sm:items-start rounded-sm gap-2 p-2 overflow-x-auto sm:overflow-y-auto"
-      >
-        {cards.map((card) => (
-          <Card key={card.id} card={card} onOpen={onOpenCard} />
-        ))}
-      </ul>
+      <SortableContext items={cards.map((card) => card.id)}>
+        <ul
+          role="list"
+          className="flex-auto flex sm:flex-col justify-start items-stretch sm:items-start rounded-sm gap-2 p-2 overflow-x-auto sm:overflow-y-auto"
+        >
+          {cards.map((card) => (
+            <Card key={card.id} card={card} onOpen={onOpenCard} />
+          ))}
+        </ul>
+      </SortableContext>
+
       {onOpenCreate && (
         <button
           type="button"

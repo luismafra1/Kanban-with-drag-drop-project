@@ -1,4 +1,16 @@
+import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
+import {
+  closestCorners,
+  DndContext,
+  DragOverlay,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { useState } from "react";
+import { getMoveFromDrag } from "../state/getMoveFromDrag";
 import type {
   AddCardHandler,
   BoardState,
@@ -9,6 +21,7 @@ import type {
   MoveColumnOption,
   UpdateCardHandler,
 } from "../types";
+import { CardPreview } from "./Card";
 import { CardFormDialog } from "./CardFormDialog";
 import { Column } from "./Column";
 
@@ -29,6 +42,8 @@ export function Board({
 }: BoardProps) {
   const [dialogState, setDialogState] = useState<DialogState>(null);
   const closeDialog = () => setDialogState(null);
+  const [activeCardId, setActiveCardId] = useState<string | null>(null);
+  const activeCard = activeCardId ? board.cards[activeCardId] : undefined;
 
   const dialogColumn =
     dialogState?.mode === "create"
@@ -64,28 +79,58 @@ export function Board({
       ? (board.columns[dialogCardColumnId]?.cardIds.indexOf(dialogCard.id) ?? 0)
       : 0;
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+
+  function handleDragEnd({ active, over }: DragEndEvent) {
+    setActiveCardId(null);
+    if (!over) return;
+    const move = getMoveFromDrag(board, String(active.id), String(over.id));
+    if (move) onMoveCard(move);
+  }
+
+  function handleDragStart({ active }: DragStartEvent) {
+    setActiveCardId(String(active.id));
+  }
+
   return (
     <div className="size-9/10 mx-auto bg-surface flex flex-col sm:flex-row justify-evenly items-center border border-border rounded-sm">
-      {board.columnOrder.map((columnId, index) => {
-        const column = board.columns[columnId];
-        if (!column) return null;
-        const cards = column.cardIds
-          .map((cardId) => board.cards[cardId])
-          .filter((card): card is CardData => card !== undefined);
-        return (
-          <Column
-            key={column.id}
-            column={column}
-            cards={cards}
-            onOpenCard={(cardId) => setDialogState({ mode: "edit", cardId })}
-            onOpenCreate={
-              index === 0
-                ? () => setDialogState({ mode: "create", columnId: column.id })
-                : undefined
-            }
-          />
-        );
-      })}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCorners}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        onDragCancel={() => setActiveCardId(null)}
+      >
+        {board.columnOrder.map((columnId, index) => {
+          const column = board.columns[columnId];
+          if (!column) return null;
+          const cards = column.cardIds
+            .map((cardId) => board.cards[cardId])
+            .filter((card): card is CardData => card !== undefined);
+          return (
+            <Column
+              key={column.id}
+              column={column}
+              cards={cards}
+              onOpenCard={(cardId) => setDialogState({ mode: "edit", cardId })}
+              onOpenCreate={
+                index === 0
+                  ? () =>
+                      setDialogState({ mode: "create", columnId: column.id })
+                  : undefined
+              }
+            />
+          );
+        })}
+        <DragOverlay>
+          {activeCard ? <CardPreview card={activeCard} /> : null}
+        </DragOverlay>
+      </DndContext>
 
       {dialogColumn && (
         <CardFormDialog
