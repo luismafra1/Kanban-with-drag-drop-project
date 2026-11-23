@@ -34,8 +34,9 @@ export function Card({ card, onOpen }: CardProps) {
         ref={setActivatorNodeRef}
         {...attributes}
         {...listeners}
+        data-handle={card.id}
         aria-label={`Drag card ${card.title}`}
-        className="touch-none cursor-grab px-1 text-muted"
+        className="touch-none cursor-grab px-2 text-muted"
       >
         ⠿
       </button>
@@ -58,7 +59,7 @@ export function Card({ card, onOpen }: CardProps) {
 
 export function CardPreview({ card }: { card: CardData }) {
   return (
-    <div className="flex h-full w-full cursor-grabbing flex-col items-center bg-white text-navy shadow-lg rounded-sm p-2 font-medium text-center wrap-break-word">
+    <div className="flex h-full w-full cursor-grabbing flex-col items-center bg-white text-navy shadow-lg rounded-sm p-2 pl-8 font-medium text-center wrap-break-word">
       <span className="text-lg font-bold">{card.title}</span>
       {card.description && (
         <span className="mt-1 text-sm font-normal text-left line-clamp-2 text-muted">

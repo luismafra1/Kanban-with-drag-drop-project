@@ -1,4 +1,4 @@
-import { useDroppable } from "@dnd-kit/core";
+import { useDndContext, useDroppable } from "@dnd-kit/core";
 import { SortableContext } from "@dnd-kit/sortable";
 import type { Card as CardData, Column as ColumnData } from "../types";
 import { Card } from "./Card";
@@ -17,11 +17,16 @@ export function Column({
   onOpenCreate,
 }: ColumnProps) {
   const { setNodeRef } = useDroppable({ id: column.id });
+  const { active, over } = useDndContext();
+  const isTarget =
+    active != null &&
+    over !== null &&
+    (over.id === column.id || cards.some((card) => card.id === over.id));
   return (
     <section
       ref={setNodeRef}
       aria-labelledby={`column-${column.id}`}
-      className="bg-border flex flex-col p-2 h-3/10 sm:h-9/10 w-9/10 sm:w-3/10 border border-border rounded-sm gap-2"
+      className={`bg-border flex flex-col p-2 h-3/10 sm:h-9/10 w-9/10 sm:w-3/10 border border-border rounded-sm gap-2 ${isTarget ? "ring-2 ring-accent-dark bg-accent-light/40" : ""}`}
     >
       <h2
         id={`column-${column.id}`}

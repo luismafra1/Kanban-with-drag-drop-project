@@ -1,4 +1,9 @@
-import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
+import type {
+  Announcements,
+  DragEndEvent,
+  DragStartEvent,
+  UniqueIdentifier,
+} from "@dnd-kit/core";
 import {
   closestCorners,
   DndContext,
@@ -9,7 +14,7 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getMoveFromDrag } from "../state/getMoveFromDrag";
 import type {
   AddCardHandler,
@@ -43,6 +48,7 @@ export function Board({
   const [dialogState, setDialogState] = useState<DialogState>(null);
   const closeDialog = () => setDialogState(null);
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
+  const pendingFocusId = useRef<string | null>(null);
   const activeCard = activeCardId ? board.cards[activeCardId] : undefined;
 
   const dialogColumn =
@@ -90,16 +96,50 @@ export function Board({
     setActiveCardId(null);
     if (!over) return;
     const move = getMoveFromDrag(board, String(active.id), String(over.id));
-    if (move) onMoveCard(move);
+    if (move) {
+      pendingFocusId.current = String(active.id);
+      onMoveCard(move);
+    }
   }
 
   function handleDragStart({ active }: DragStartEvent) {
     setActiveCardId(String(active.id));
   }
 
+  const nameOf = (id: UniqueIdentifier) =>
+    board.cards[String(id)]?.title ??
+    board.columns[String(id)]?.title ??
+    "item";
+
+  const announcements: Announcements = {
+    onDragStart: ({ active }) => `Picked up card ${nameOf(active.id)}`,
+    onDragOver: ({ active, over }) =>
+      over ? `Card ${nameOf(active.id)} is over ${nameOf(over.id)}` : undefined,
+    onDragEnd: ({ active, over }) => {
+      const move = over
+        ? getMoveFromDrag(board, String(active.id), String(over.id))
+        : null;
+      const column = move ? board.columns[move.destinationColumnId] : undefined;
+      return move && column
+        ? `Card ${nameOf(active.id)} moved to ${column.title}, position ${move.destinationIndex + 1}.`
+        : `Card ${nameOf(active.id)} was dropped and stayed in place`;
+    },
+    onDragCancel: ({ active }) =>
+      `Draggin cancelled. Card ${nameOf(active.id)} was not moved.`,
+  };
+
+  useEffect(() => {
+    if (!pendingFocusId.current) return;
+    document
+      .querySelector<HTMLElement>(`[data-handle="${pendingFocusId.current}"]`)
+      ?.focus();
+    pendingFocusId.current = null;
+  }, [board]);
+
   return (
     <div className="size-9/10 mx-auto bg-surface flex flex-col sm:flex-row justify-evenly items-center border border-border rounded-sm">
       <DndContext
+        accessibility={{ announcements }}
         sensors={sensors}
         collisionDetection={closestCorners}
         onDragStart={handleDragStart}
@@ -127,7 +167,7 @@ export function Board({
             />
           );
         })}
-        <DragOverlay>
+        <DragOverlay dropAnimation={null}>
           {activeCard ? <CardPreview card={activeCard} /> : null}
         </DragOverlay>
       </DndContext>
