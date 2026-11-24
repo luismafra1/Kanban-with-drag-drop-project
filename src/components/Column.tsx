@@ -7,15 +7,9 @@ type ColumnProps = {
   column: ColumnData;
   cards: CardData[];
   onOpenCard: (cardId: string) => void;
-  onOpenCreate?: () => void;
 };
 
-export function Column({
-  column,
-  cards,
-  onOpenCard,
-  onOpenCreate,
-}: ColumnProps) {
+export function Column({ column, cards, onOpenCard }: ColumnProps) {
   const { setNodeRef } = useDroppable({ id: column.id });
   const { active, over } = useDndContext();
   const isTarget =
@@ -26,7 +20,7 @@ export function Column({
     <section
       ref={setNodeRef}
       aria-labelledby={`column-${column.id}`}
-      className={`bg-border flex flex-col p-2 h-3/10 sm:h-9/10 w-9/10 sm:w-3/10 border border-border rounded-sm gap-2 ${isTarget ? "ring-2 ring-accent-dark bg-accent-light/40" : ""}`}
+      className={`bg-border flex flex-col p-2 flex-1 min-h-0 min-w-0 border border-border rounded-sm gap-2 ${isTarget ? "ring-2 ring-accent-dark bg-accent-light/40" : ""}`}
     >
       <h2
         id={`column-${column.id}`}
@@ -44,17 +38,6 @@ export function Column({
           ))}
         </ul>
       </SortableContext>
-
-      {onOpenCreate && (
-        <button
-          type="button"
-          onClick={onOpenCreate}
-          className="bg-accent-dark text-navy rounded-sm p-1 hover:cursor-pointer font-semibold"
-          aria-label={`Add card to ${column.title}`}
-        >
-          Add Card
-        </button>
-      )}
     </section>
   );
 }

@@ -1,15 +1,18 @@
 import type {
   Announcements,
+  CollisionDetection,
   DragEndEvent,
   DragStartEvent,
   UniqueIdentifier,
 } from "@dnd-kit/core";
 import {
-  closestCorners,
+  closestCenter,
   DndContext,
   DragOverlay,
   KeyboardSensor,
   PointerSensor,
+  pointerWithin,
+  rectIntersection,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
@@ -92,6 +95,25 @@ export function Board({
     }),
   );
 
+  const collisionDetection: CollisionDetection = (args) => {
+    const pointerHits = pointerWithin(args);
+    const hits = pointerHits.length > 0 ? pointerHits : rectIntersection(args);
+    const first = hits[0];
+    if (!first) return [];
+
+    const column = board.columns[String(first.id)];
+    if (column && column.cardIds.length > 0) {
+      const insideColumn = closestCenter({
+        ...args,
+        droppableContainers: args.droppableContainers.filter((container) =>
+          column.cardIds.includes(String(container.id)),
+        ),
+      });
+      if (insideColumn.length > 0) return insideColumn;
+    }
+    return hits;
+  };
+
   function handleDragEnd({ active, over }: DragEndEvent) {
     setActiveCardId(null);
     if (!over) return;
@@ -125,7 +147,7 @@ export function Board({
         : `Card ${nameOf(active.id)} was dropped and stayed in place`;
     },
     onDragCancel: ({ active }) =>
-      `Draggin cancelled. Card ${nameOf(active.id)} was not moved.`,
+      `Dragging cancelled. Card ${nameOf(active.id)} was not moved.`,
   };
 
   useEffect(() => {
@@ -136,41 +158,57 @@ export function Board({
     pendingFocusId.current = null;
   }, [board]);
 
+  const firstColumnId = board.columnOrder[0];
+  const firstColumn = firstColumnId ? board.columns[firstColumnId] : undefined;
+
   return (
-    <div className="size-9/10 mx-auto bg-surface flex flex-col sm:flex-row justify-evenly items-center border border-border rounded-sm">
-      <DndContext
-        accessibility={{ announcements }}
-        sensors={sensors}
-        collisionDetection={closestCorners}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-        onDragCancel={() => setActiveCardId(null)}
-      >
-        {board.columnOrder.map((columnId, index) => {
-          const column = board.columns[columnId];
-          if (!column) return null;
-          const cards = column.cardIds
-            .map((cardId) => board.cards[cardId])
-            .filter((card): card is CardData => card !== undefined);
-          return (
-            <Column
-              key={column.id}
-              column={column}
-              cards={cards}
-              onOpenCard={(cardId) => setDialogState({ mode: "edit", cardId })}
-              onOpenCreate={
-                index === 0
-                  ? () =>
-                      setDialogState({ mode: "create", columnId: column.id })
-                  : undefined
-              }
-            />
-          );
-        })}
-        <DragOverlay dropAnimation={null}>
-          {activeCard ? <CardPreview card={activeCard} /> : null}
-        </DragOverlay>
-      </DndContext>
+    <div className="size-9/10 mx-auto bg-surface flex flex-col border border-border rounded-sm">
+      <div className="flex-1 min-h-0 flex flex-col sm:flex-row gap-2 p-2">
+        <DndContext
+          accessibility={{ announcements }}
+          sensors={sensors}
+          collisionDetection={collisionDetection}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          onDragCancel={() => setActiveCardId(null)}
+        >
+          {board.columnOrder.map((columnId) => {
+            const column = board.columns[columnId];
+            if (!column) return null;
+            const cards = column.cardIds
+              .map((cardId) => board.cards[cardId])
+              .filter((card): card is CardData => card !== undefined);
+            return (
+              <Column
+                key={column.id}
+                column={column}
+                cards={cards}
+                onOpenCard={(cardId) =>
+                  setDialogState({ mode: "edit", cardId })
+                }
+              />
+            );
+          })}
+          <DragOverlay dropAnimation={null}>
+            {activeCard ? <CardPreview card={activeCard} /> : null}
+          </DragOverlay>
+        </DndContext>
+      </div>
+
+      {firstColumn && (
+        <div className="flex justify-center p-2">
+          <button
+            type="button"
+            onClick={() =>
+              setDialogState({ mode: "create", columnId: firstColumn.id })
+            }
+            aria-label={`Add card to ${firstColumn.title}`}
+            className="bg-accent-dark text-navy rounded-sm px-6 py-1 font-semibold cursor-pointer"
+          >
+            Add Card
+          </button>
+        </div>
+      )}
 
       {dialogColumn && (
         <CardFormDialog
